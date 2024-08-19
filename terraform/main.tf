@@ -126,9 +126,21 @@ provisioner "remote-exec" {
     # Install Ansible and Python packages
     "sudo apt-get install -y ansible python3-pip || (echo 'Failed to install Ansible and pip' && exit 1)",
     "pip3 install --user google-auth requests || (echo 'Failed to install Python packages' && exit 1)",
+    
+    # Install Docker
+    "sudo apt-get remove docker docker-engine docker.io containerd runc || true",
+    "sudo apt-get update",
+    "sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release",
+    "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg",
+    "echo \"deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
+    "sudo apt-get update",
+    "sudo apt-get install -y docker-ce docker-ce-cli containerd.io",
+    "sudo systemctl start docker",
+    "sudo systemctl enable docker",
+    
+    # Now add user to docker group
     "sudo usermod -aG docker mouad",
     "newgrp docker",
-    "ls -l /var/run/docker.sock || echo 'Docker socket not found'",
     
     # Install Kubernetes components (updated for new repository)
     "sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg || (echo 'Failed to download Kubernetes GPG key' && exit 1)",
@@ -139,14 +151,6 @@ provisioner "remote-exec" {
     "sudo systemctl restart kubelet || (echo 'Failed to restart kubelet service' && exit 1)",
     "pip3 install --user kubernetes openshift",
 
-    
-    # Install Docker
-    "sudo apt-get install -y docker.io || (echo 'Failed to install Docker' && exit 1)",
-    "sudo systemctl enable docker || (echo 'Failed to enable Docker' && exit 1)",
-    "sudo systemctl start docker || (echo 'Failed to start Docker' && exit 1)",
-    "sudo usermod -aG docker mouad",
-    "newgrp docker",
-    "ls -l /var/run/docker.sock || echo 'Docker socket not found'",
     # Add local bin to PATH
     "echo 'export PATH=$PATH:$HOME/.local/bin' >> $HOME/.bashrc",
     "export PATH=$PATH:$HOME/.local/bin",
@@ -166,6 +170,7 @@ provisioner "remote-exec" {
     # Set up GCP service account
     "echo 'export GCP_SERVICE_ACCOUNT_FILE=/home/mouad/gcp-key.json' >> $HOME/.bashrc",
     "export GCP_SERVICE_ACCOUNT_FILE=/home/mouad/gcp-key.json",
+    
     # Install kubectl
     "curl -LO https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl",
     "chmod +x kubectl",

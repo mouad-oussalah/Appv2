@@ -134,6 +134,7 @@ provisioner "remote-exec" {
     "sudo apt-get install -y kubelet kubeadm kubectl || (echo 'Failed to install Kubernetes components' && exit 1)",
     "sudo apt-mark hold kubelet kubeadm kubectl || (echo 'Failed to hold Kubernetes components' && exit 1)",
     "sudo systemctl restart kubelet || (echo 'Failed to restart kubelet service' && exit 1)",
+    "pip3 install --user kubernetes openshift",
 
     
     # Install Docker
@@ -154,6 +155,7 @@ provisioner "remote-exec" {
     # Install Ansible collection
     "ansible-galaxy collection install google.cloud || (echo 'Failed to install Ansible collection' && exit 1)",
     "ansible-galaxy collection install kubernetes.core",
+    "ansible-galaxy collection install community.general",
     
     # Set up GCP service account
     "echo 'export GCP_SERVICE_ACCOUNT_FILE=/home/mouad/gcp-key.json' >> $HOME/.bashrc",
@@ -170,7 +172,7 @@ provisioner "remote-exec" {
     
     # Run Ansible playbook
     "cd /home/mouad/ansible || (echo 'Failed to change directory' && exit 1)",
-    "ansible-playbook main.yml || (echo 'Failed to run Ansible playbook' && exit 1)"
+    "ansible-playbook main.yml -vvv || (echo 'Failed to run Ansible playbook' && exit 1)"
   ]
   
   connection {

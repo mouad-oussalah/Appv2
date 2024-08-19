@@ -1,0 +1,59 @@
+---
+- hosts: master
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: Create ArgoCD namespace
+      kubernetes:
+        name: argocd
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Install ArgoCD
+      kubernetes:
+        definition: "{{ lookup('url', 'https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml') | from_yaml_all | list }}"
+        state: present
+
+    - name: Wait for ArgoCD server to be ready
+      kubernetes:
+        api_version: apps/v1
+        kind: Deployment
+        name: argocd-server
+        namespace: argocd
+      register: argocd_server
+      until: argocd_server.result.status.ready_replicas is defined and argocd_server.result.status.ready_replicas > 0
+      retries: 10
+      delay: 30
+
+    - name: Get ArgoCD admin password
+      kubernetes:
+        api_version: v1
+        kind: Secret
+        name: argocd-initial-admin-secret
+        namespace: argocd
+      register: argocd_secret
+
+    - name: Decode ArgoCD admin password
+      set_fact:
+        argocd_admin_password: "{{ argocd_secret.result.data.password | b64decode }}"
+
+    - name: Create ArgoCD application manifest
+      template:
+        src: argocd-application.yaml.j2
+        dest: /tmp/argocd-application.yaml
+
+    - name: Apply ArgoCD application
+      kubernetes:
+        src: /tmp/argocd-application.yaml
+        state: present
+
+    - name: Log in to ArgoCD
+      command: >
+        argocd login --port-forward --port-forward-namespace argocd
+        --username admin --password {{ argocd_admin_password }} --insecure
+      changed_when: false
+
+    - name: Sync ArgoCD application
+      command: argocd app sync olympicplayers-app
+      changed_when: false

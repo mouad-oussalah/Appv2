@@ -40,3 +40,19 @@
   tasks:
     - name: Join cluster
       command: "{{ hostvars[groups['master'][0]]['join_command'] }} --v=5"
+    - name: Create ConfigMap
+  kubernetes:
+    definition: "{{ lookup('file', '/home/mouad/Desktop/Appv2/K8s/configmap.yaml') | from_yaml }}"
+    state: present
+- name: Create Secret
+  kubernetes:
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: app-secrets
+      type: Opaque
+      stringData:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+    state: present

@@ -143,6 +143,15 @@ provisioner "remote-exec" {
     # Set up GCP service account
     "echo 'export GCP_SERVICE_ACCOUNT_FILE=/home/mouad/gcp-key.json' >> $HOME/.bashrc",
     "export GCP_SERVICE_ACCOUNT_FILE=/home/mouad/gcp-key.json",
+    # Install kubectl
+    "curl -LO https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl",
+    "chmod +x kubectl",
+    "sudo mv kubectl /usr/local/bin/",
+    
+    # Install ArgoCD CLI
+    "curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64",
+    "sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd",
+    "rm argocd-linux-amd64",
     
     # Run Ansible playbook
     "cd /home/mouad/ansible || (echo 'Failed to change directory' && exit 1)",

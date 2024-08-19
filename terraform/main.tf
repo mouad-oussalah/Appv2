@@ -76,6 +76,20 @@ resource "google_compute_instance" "vm_tooling" {
       host        = self.network_interface[0].access_config[0].nat_ip
     }
   }
+  provisioner "remote-exec" {
+  inline = [
+    "mkdir -p /home/mouad/Desktop/Appv2",
+    "chmod -R 755 /home/mouad/Desktop/Appv2",
+    "chown -R mouad:mouad /home/mouad/Desktop/Appv2"
+  ]
+  
+  connection {
+    type        = "ssh"
+    user        = "mouad"
+    private_key = file("~/.ssh/id_ed25519")
+    host        = self.network_interface[0].access_config[0].nat_ip
+  }
+}
   provisioner "file" {
     source      = "/home/mouad/Desktop/Appv2"
     destination = "/home/mouad/Desktop"
@@ -139,6 +153,7 @@ provisioner "remote-exec" {
     
     # Install Ansible collection
     "ansible-galaxy collection install google.cloud || (echo 'Failed to install Ansible collection' && exit 1)",
+    "ansible-galaxy collection install kubernetes.core",
     
     # Set up GCP service account
     "echo 'export GCP_SERVICE_ACCOUNT_FILE=/home/mouad/gcp-key.json' >> $HOME/.bashrc",

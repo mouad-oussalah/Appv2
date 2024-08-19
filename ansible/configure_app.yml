@@ -1,0 +1,35 @@
+---
+- hosts: workers
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+
+    # Docker and Kubernetes are now installed by Terraform
+    # You can add any additional configuration tasks here if needed
+
+    - name: Copy application files
+      copy:
+        src: /home/mouad/Desktop/Appv2/
+        dest: /home/mouad/app
+      delegate_to: localhost
+      become_user: mouad
+
+    - name: Build Docker image
+      docker_image:
+        name: olympicplayers-app
+        build:
+          path: /home/mouad/app
+        source: build
+      become_user: mouad

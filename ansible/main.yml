@@ -1,0 +1,4 @@
+---
+- import_playbook: configure_tooling.yml
+- import_playbook: configure_app.yml
+- import_playbook: create_cluster.yml

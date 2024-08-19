@@ -1,0 +1,10 @@
+plugin: google.cloud.gcp_compute
+projects:
+  - dxc-project-1234
+regions:
+  - us-central1
+groups:
+  master: "'vm-tooling' in name"
+  workers: "'vm-app' in name"
+auth_kind: serviceaccount
+service_account_file: /home/mouad/gcp-key.json

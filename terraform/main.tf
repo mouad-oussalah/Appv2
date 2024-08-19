@@ -126,6 +126,9 @@ provisioner "remote-exec" {
     # Install Ansible and Python packages
     "sudo apt-get install -y ansible python3-pip || (echo 'Failed to install Ansible and pip' && exit 1)",
     "pip3 install --user google-auth requests || (echo 'Failed to install Python packages' && exit 1)",
+    "sudo usermod -aG docker mouad",
+    "newgrp docker",
+    "ls -l /var/run/docker.sock || echo 'Docker socket not found'",
     
     # Install Kubernetes components (updated for new repository)
     "sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg || (echo 'Failed to download Kubernetes GPG key' && exit 1)",
@@ -141,7 +144,9 @@ provisioner "remote-exec" {
     "sudo apt-get install -y docker.io || (echo 'Failed to install Docker' && exit 1)",
     "sudo systemctl enable docker || (echo 'Failed to enable Docker' && exit 1)",
     "sudo systemctl start docker || (echo 'Failed to start Docker' && exit 1)",
-    
+    "sudo usermod -aG docker mouad",
+    "newgrp docker",
+    "ls -l /var/run/docker.sock || echo 'Docker socket not found'",
     # Add local bin to PATH
     "echo 'export PATH=$PATH:$HOME/.local/bin' >> $HOME/.bashrc",
     "export PATH=$PATH:$HOME/.local/bin",
@@ -156,6 +161,7 @@ provisioner "remote-exec" {
     "ansible-galaxy collection install google.cloud || (echo 'Failed to install Ansible collection' && exit 1)",
     "ansible-galaxy collection install kubernetes.core",
     "ansible-galaxy collection install community.general",
+    "ansible-galaxy collection install community.docker",
     
     # Set up GCP service account
     "echo 'export GCP_SERVICE_ACCOUNT_FILE=/home/mouad/gcp-key.json' >> $HOME/.bashrc",

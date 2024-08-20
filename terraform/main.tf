@@ -110,6 +110,7 @@ resource "google_compute_instance" "vm_tooling" {
       "sudo apt-mark hold kubelet kubeadm kubectl || (echo 'Failed to hold Kubernetes components' && exit 1)",
       "sudo systemctl restart kubelet || (echo 'Failed to restart kubelet service' && exit 1)",
       "pip3 install --user kubernetes openshift",
+      "sudo pip3 install google-auth requests kubernetes openshift",
 
       # Add local bin to PATH
       "echo 'export PATH=$PATH:$HOME/.local/bin' >> $HOME/.bashrc",
@@ -143,7 +144,7 @@ resource "google_compute_instance" "vm_tooling" {
       
       # Run Ansible playbook
       "cd /home/mouad/ansible || (echo 'Failed to change directory' && exit 1)",
-      "sudo ansible-playbook main.yml -vvv || (echo 'Failed to run Ansible playbook' && exit 1)"
+      "sudo ansible-playbook -i /home/mouad/ansible/gcp_compute.yml main.yml -vvv || (echo 'Failed to run Ansible playbook' && exit 1)"
     ]
     
     connection {

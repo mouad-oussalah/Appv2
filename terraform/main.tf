@@ -28,7 +28,7 @@ resource "google_compute_firewall" "allow_ssh" {
 
 resource "google_compute_instance" "vm_tooling" {
   name         = "vm-tooling"
-  machine_type = "e2-medium"
+  machine_type = "n2-standard-4"
   zone         = "us-central1-a"
 
   boot_disk {
@@ -197,7 +197,7 @@ provisioner "remote-exec" {
 
 resource "google_compute_instance" "vm_app" {
   name         = "vm-app"
-  machine_type = "e2-medium"
+  machine_type = "e2-standard-4"
   zone         = "us-central1-a"
 
   boot_disk {

@@ -77,6 +77,19 @@ resource "google_compute_instance" "vm_tooling" {
     }
   }
 
+  # Copy SSH private key to vm-tooling
+  provisioner "file" {
+    source      = "/home/mouad/.ssh/id_ed25519"
+    destination = "/home/mouad/.ssh/id_ed25519"
+    
+    connection {
+      type        = "ssh"
+      user        = "mouad"
+      private_key = file("~/.ssh/id_ed25519")
+      host        = self.network_interface[0].access_config[0].nat_ip
+    }
+  }
+
   # Copy application files to vm-tooling
   provisioner "file" {
     source      = "/home/mouad/Desktop/Appv2"

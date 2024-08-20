@@ -127,21 +127,6 @@ provisioner "remote-exec" {
     "sudo apt-get install -y ansible python3-pip || (echo 'Failed to install Ansible and pip' && exit 1)",
     "pip3 install --user google-auth requests || (echo 'Failed to install Python packages' && exit 1)",
     
-    # Install Docker
-    "sudo apt-get remove docker docker-engine docker.io containerd runc || true",
-    "sudo apt-get update",
-    "sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release",
-    "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg",
-    "echo \"deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null",
-    "sudo apt-get update",
-    "sudo apt-get install -y docker-ce docker-ce-cli containerd.io",
-    "sudo systemctl start docker",
-    "sudo systemctl enable docker",
-    
-    # Now add user to docker group
-    "sudo usermod -aG docker mouad",
-    "newgrp docker",
-    
     # Install Kubernetes components (updated for new repository)
     "sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg || (echo 'Failed to download Kubernetes GPG key' && exit 1)",
     "echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list || (echo 'Failed to add Kubernetes repo' && exit 1)",

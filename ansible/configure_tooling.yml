@@ -15,12 +15,40 @@
           - ca-certificates
           - curl
           - gnupg
+          - lsb-release
         state: present
 
-    # Docker and Kubernetes are now installed in the Terraform script,
-    # so we don't need to handle them here.
+    - name: Remove old Docker versions
+      apt:
+        name:
+          - docker
+          - docker-engine
+          - docker.io
+          - containerd
+          - runc
+        state: absent
 
-    # You might want to add any additional configuration tasks here
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+        state: present
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
 
     - name: Enable and start Docker service
       systemd:
@@ -28,7 +56,16 @@
         state: started
         enabled: yes
 
+    - name: Add user to docker group
+      user:
+        name: mouad
+        groups: docker
+        append: yes
+
     - name: Enable kubelet service
       systemd:
         name: kubelet
         enabled: yes
+
+    - name: Reset SSH connection to allow user changes to affect 'ansible_user'
+      meta: reset_connection

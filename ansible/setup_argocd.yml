@@ -4,19 +4,19 @@
   gather_facts: yes
   tasks:
     - name: Create ArgoCD namespace
-      kubernetes:
+      kubernetes.core.k8s:
         name: argocd
         api_version: v1
         kind: Namespace
         state: present
 
     - name: Install ArgoCD
-      kubernetes:
+      kubernetes.core.k8s:
         definition: "{{ lookup('url', 'https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml') | from_yaml_all | list }}"
         state: present
 
     - name: Wait for ArgoCD server to be ready
-      kubernetes:
+      kubernetes.core.k8s:
         api_version: apps/v1
         kind: Deployment
         name: argocd-server
@@ -27,7 +27,7 @@
       delay: 30
 
     - name: Get ArgoCD admin password
-      kubernetes:
+      kubernetes.core.k8s:
         api_version: v1
         kind: Secret
         name: argocd-initial-admin-secret
@@ -44,7 +44,7 @@
         dest: /tmp/argocd-application.yaml
 
     - name: Apply ArgoCD application
-      kubernetes:
+      kubernetes.core.k8s:
         src: /tmp/argocd-application.yaml
         state: present
 

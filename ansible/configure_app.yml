@@ -21,6 +21,27 @@
       apt_key:
         url: https://download.docker.com/linux/ubuntu/gpg
         state: present
+    - name: Download and add Kubernetes GPG key
+      get_url:
+        url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
+        dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        mode: '0644'
+    
+    - name: Add Kubernetes repository
+      apt_repository:
+        repo: deb [trusted=yes] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
+        state: present
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+    
+    - name: Install Kubernetes components
+      apt:
+        name:
+          - kubelet
+          - kubeadm
+        state: present
 
     - name: Add Docker Repository
       apt_repository:

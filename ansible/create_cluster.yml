@@ -3,6 +3,10 @@
   become: yes
   gather_facts: yes
   tasks:
+    - name: delete toml file
+      file:
+        path: /etc/containerd/config.toml
+        state: absent
     - name: Initialize Kubernetes cluster
       command: kubeadm init --pod-network-cidr=10.244.0.0/16
       register: kubeadm_init
@@ -38,6 +42,33 @@
   become: yes
   gather_facts: yes
   tasks:
+    - name: delete toml file
+      file:
+        path: /etc/containerd/config.toml
+        state: absent
+
+    - name: Download and add Kubernetes GPG key
+      get_url:
+        url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
+        dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        mode: '0644'
+    
+    - name: Add Kubernetes repository
+      apt_repository:
+        repo: deb [trusted=yes] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
+        state: present
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+    
+    - name: Install Kubernetes components
+      apt:
+        name:
+          - kubelet
+          - kubeadm
+        state: present
+      
     - name: Join cluster
       command: "{{ hostvars[groups['master'][0]]['join_command'] }} --v=5"
 

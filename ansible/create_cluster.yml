@@ -41,26 +41,26 @@
     - name: Join cluster
       command: "{{ hostvars[groups['master'][0]]['join_command'] }} --v=5"
 
-- hosts: master
-  become: yes
-  gather_facts: yes
-  tasks:
-    - name: Create ConfigMap
-      kubernetes.core.k8s:
-        definition: "{{ lookup('file', '/home/mouad/Appv2/K8s/configmap.yaml') | from_yaml }}"
-        state: present
-      become_user: mouad
+# - hosts: master
+#   become: yes
+#   gather_facts: yes
+#   tasks:
+#     - name: Create ConfigMap
+#       kubernetes.core.k8s:
+#         definition: "{{ lookup('file', '/home/mouad/Appv2/K8s/configmap.yaml') | from_yaml }}"
+#         state: present
+#       become_user: mouad
 
-    - name: Create Secret
-      kubernetes.core.k8s:
-        definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: app-secrets
-          type: Opaque
-          stringData:
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: postgres
-        state: present
-      become_user: mouad
+#     - name: Create Secret
+#       kubernetes.core.k8s:
+#         definition:
+#           apiVersion: v1
+#           kind: Secret
+#           metadata:
+#             name: app-secrets
+#           type: Opaque
+#           stringData:
+#             POSTGRES_USER: postgres
+#             POSTGRES_PASSWORD: postgres
+#         state: present
+#       become_user: mouad

@@ -130,6 +130,7 @@
         mode: '0555'
 
     - name: git clone
+      tags: clonecode
       git:
         repo: https://{{GITHUB_USER|urlencode}}:{{GITHUB_TOKEN|urlencode}}@github.com/mouad-oussalah/Appv2.git
         dest: /home/mouad/Appv2

@@ -47,30 +47,8 @@
         path: /etc/containerd/config.toml
         state: absent
 
-    - name: Download and add Kubernetes GPG key
-      get_url:
-        url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
-        dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-        mode: '0644'
-    
-    - name: Add Kubernetes repository
-      apt_repository:
-        repo: deb [trusted=yes] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
-        state: present
-
-    - name: Update apt cache
-      apt:
-        update_cache: yes
-    
-    - name: Install Kubernetes components
-      apt:
-        name:
-          - kubelet
-          - kubeadm
-        state: present
-      
     - name: Join cluster
-      command: "{{ hostvars[groups['master'][0]]['join_command'] }} --v=5"
+      command: ""
 
 # - hosts: master
 #   become: yes

@@ -10,23 +10,14 @@
     - name: Install required packages
       apt:
         name:
-          - ansible
+          - git
           - apt-transport-https
           - ca-certificates
           - curl
           - gnupg
           - lsb-release
+          - software-properties-common
         state: present
-
-    - name: Remove old Docker versions
-      apt:
-        name:
-          - docker
-          - docker-engine
-          - docker.io
-          - containerd
-          - runc
-        state: absent
 
     - name: Add Docker GPG apt Key
       apt_key:
@@ -62,10 +53,83 @@
         groups: docker
         append: yes
 
-    - name: Enable kubelet service
-      systemd:
-        name: kubelet
-        enabled: yes
+    - name: Install Ansible and Python packages
+      tags: installansible
+      apt:
+        name:
+          - ansible
+          - python3-pip
+        state: present
 
-    - name: Reset SSH connection to allow user changes to affect 'ansible_user'
-      meta: reset_connection
+    - name: Install Python packages
+      tags: installpythonpackage
+      pip:
+        name:
+          - google-auth
+          - requests
+          - kubernetes
+
+
+    - name: Install Ansible collections
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection install {{ item }}
+      loop:
+        - google.cloud
+        - kubernetes.core
+        - community.general
+        - community.docker
+
+
+    - name: copy gcp key 
+      copy:
+       src: /home/mouad/gcp-key.json
+       dest: /home/mouad/gcp-key.json
+
+    - name: copy ssh key
+      tags: copysshkey
+      copy:
+        src: /home/mouad/.ssh/id_ed25519
+        dest: /home/mouad/.ssh/id_ed25519
+        mode: '0600'
+        group: mouad
+        owner: mouad
+
+    - name: Set GCP service account environment variable
+      lineinfile:
+        path: ~/.bashrc
+        line: export GCP_SERVICE_ACCOUNT_FILE=/home/mouad/gcp-key.json
+
+    - name: Download and add Kubernetes GPG key
+      get_url:
+        url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
+        dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        mode: '0644'
+    
+    - name: Add Kubernetes repository
+      apt_repository:
+        repo: deb [trusted=yes] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
+        state: present
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+    
+    - name: Install Kubernetes components
+      apt:
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: present
+    
+
+    - name: Install ArgoCD CLI
+      get_url:
+        url: https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+        dest: /usr/local/bin/argocd
+        mode: '0555'
+
+    - name: git clone
+      git:
+        repo: https://{{GITHUB_USER|urlencode}}:{{GITHUB_TOKEN|urlencode}}@github.com/mouad-oussalah/Appv2.git
+        dest: /home/mouad/Appv2

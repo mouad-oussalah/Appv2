@@ -3,3 +3,4 @@
 - import_playbook: configure_app.yml
 - import_playbook: create_cluster.yml
 - import_playbook: setup_argocd.yml
+- import_playbook: gcp_storage.yml

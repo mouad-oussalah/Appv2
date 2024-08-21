@@ -54,23 +54,17 @@
     - name: Reset connection to allow user changes to affect ansible user
       meta: reset_connection
 
-    - name: Ensure app directory exists
-      file:
-        path: /home/mouad/app
-        state: directory
-        mode: '0755'
+    # - name: Ensure app directory exists
+    #   file:
+    #     path: /home/mouad/app
+    #     state: directory
+    #     mode: '0755'
 
-    # This task is now redundant as we're copying files in Terraform, but you can keep it as a safeguard
-    - name: Copy application files
-      copy:
-        src: /home/mouad/Desktop/Appv2/
-        dest: /home/mouad/app
-      # Removed delegate_to and become_user
 
-    - name: Build Docker image
-      community.docker.docker_image:
-        name: olympicplayers-app
-        build:
-          path: /home/mouad/app
-        source: build
-      become: yes
+    # - name: Build Docker image
+    #   community.docker.docker_image:
+    #     name: olympicplayers-app
+    #     build:
+    #       path: /home/mouad/app
+    #     source: build
+    #   become: yes

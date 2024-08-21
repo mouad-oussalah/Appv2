@@ -52,7 +52,7 @@ resource "google_compute_instance" "vm_tooling" {
   tags = ["tooling"]
 
   # Copy Ansible files to vm-tooling
-  provisioner "file" {
+  /*provisioner "file" {
     source      = "../ansible"
     destination = "/home/mouad/ansible"
     
@@ -62,10 +62,10 @@ resource "google_compute_instance" "vm_tooling" {
       private_key = file("~/.ssh/id_ed25519")
       host        = self.network_interface[0].access_config[0].nat_ip
     }
-  }
+  }*/
 
   # Copy GCP service account key to vm-tooling
-  provisioner "file" {
+  /*provisioner "file" {
     source      = "/home/mouad/dxc-project-1234-c9724e72a3cc.json"
     destination = "/home/mouad/gcp-key.json"
     
@@ -75,10 +75,10 @@ resource "google_compute_instance" "vm_tooling" {
       private_key = file("~/.ssh/id_ed25519")
       host        = self.network_interface[0].access_config[0].nat_ip
     }
-  }
+  }*/
 
   # Copy SSH private key to vm-tooling
-  provisioner "file" {
+  /*provisioner "file" {
     source      = "/home/mouad/.ssh/id_ed25519"
     destination = "/home/mouad/.ssh/id_ed25519"
     
@@ -88,10 +88,10 @@ resource "google_compute_instance" "vm_tooling" {
       private_key = file("~/.ssh/id_ed25519")
       host        = self.network_interface[0].access_config[0].nat_ip
     }
-  }
+  }*/
 
   # Copy application files to vm-tooling
-  provisioner "file" {
+  /*provisioner "file" {
     source      = "/home/mouad/Desktop/Appv2"
     destination = "/home/mouad/app"
     
@@ -101,10 +101,10 @@ resource "google_compute_instance" "vm_tooling" {
       private_key = file("~/.ssh/id_ed25519")
       host        = self.network_interface[0].access_config[0].nat_ip
     }
-  }
+  }*/
 
   # Install Ansible, set up GCP inventory, and run playbooks
-  provisioner "remote-exec" {
+  /*provisioner "remote-exec" {
     inline = [
       "set -e",
       "sudo apt-get update || (echo 'apt-get update failed' && exit 1)",
@@ -166,7 +166,7 @@ resource "google_compute_instance" "vm_tooling" {
       private_key = file("~/.ssh/id_ed25519")
       host        = self.network_interface[0].access_config[0].nat_ip
     }
-  }
+  }*/
 }
 
 resource "google_compute_instance" "vm_app" {

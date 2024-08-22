@@ -26,6 +26,31 @@ resource "google_compute_firewall" "allow_ssh" {
   source_ranges = ["0.0.0.0/0"]
 }
 
+resource "google_compute_firewall" "kubernetes_ports" {
+  name    = "kubernetes-ports"
+  network = google_compute_network.vpc_network.name
+
+  allow {
+    protocol = "tcp"
+    ports    = [
+      "6443",   # API Server
+      "2379",   # etcd
+      "2380",   # etcd peer communication
+      "10250",  # Kubelet
+      "10255",  # Kubelet read-only API
+      "10252",  # kube-controller-manager
+      "10251",  # kube-scheduler
+      "10049",  # kube-proxy
+      "30000-32767", # NodePort services
+      "80",     # Ingress (HTTP)
+      "443",    # Ingress (HTTPS)
+      "8080"    # Metrics server
+    ]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+}
+
 resource "google_compute_instance" "vm_tooling" {
   name         = "vm-tooling"
   machine_type = "n2-standard-4"

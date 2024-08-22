@@ -20,71 +20,72 @@
           - lsb-release
         state: present
 
-    - name: Add Docker GPG apt Key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
-    - name: Download and add Kubernetes GPG key
-      get_url:
-        url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
-        dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-        mode: '0644'
-    
-    - name: Add Kubernetes repository
-      apt_repository:
-        repo: deb [trusted=yes] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
+    - name: Install MicroK8s
+      snap:
+        name: microk8s
+        classic: yes
         state: present
 
-    - name: Update apt cache
-      apt:
-        update_cache: yes
-    
-    - name: Install Kubernetes components
-      apt:
-        name:
-          - kubelet
-          - kubeadm
-        state: present
-
-    - name: Add Docker Repository
-      apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
-        state: present
-
-    - name: Update apt cache
-      apt:
-        update_cache: yes
-
-    - name: Install Docker
-      apt:
-        name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-        state: present
-
-    - name: Enable and start Docker service
-      systemd:
-        name: docker
-        state: started
-        enabled: yes
-
-    - name: Add user to docker group
+    - name: Add user to microk8s group
       user:
         name: mouad
-        groups: docker
+        groups: microk8s
         append: yes
+
+    - name: Create .kube directory
+      file:
+        path: /home/mouad/.kube
+        state: directory
+        owner: mouad
+        group: mouad
+        mode: '0755'
+
+    - name: Change ownership of .kube directory
+      file:
+        path: /home/mouad/.kube
+        owner: mouad
+        group: mouad
+        recurse: yes
 
     - name: Reset connection to allow user changes to affect ansible user
       meta: reset_connection
-    - name: Install ArgoCD CLI
-      get_url:
-        url: https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-        dest: /usr/local/bin/argocd
-        mode: '0555'
 
-    - name: git clone
+    - name: Wait for MicroK8s to be ready
+      command: microk8s status --wait-ready
+      changed_when: false
+      
+    - name: Enable necessary MicroK8s addons
+      command: microk8s enable dns dashboard storage ingress
+      changed_when: false
+
+    - name: Create alias for kubectl
+      lineinfile:
+        path: /home/mouad/.bashrc
+        line: 'alias kubectl="microk8s kubectl"'
+        create: yes
+
+    - name: Generate kubeconfig
+      command: microk8s config
+      register: kubeconfig_output
+      changed_when: false
+
+    - name: Save kubeconfig to file
+      copy:
+        content: "{{ kubeconfig_output.stdout }}"
+        dest: /home/mouad/.kube/config
+        owner: mouad
+        group: mouad
+        mode: '0600'
+
+    - name: Git clone
       tags: clonecodeapp
       git:
         repo: https://{{GITHUB_USER|urlencode}}:{{GITHUB_TOKEN|urlencode}}@github.com/mouad-oussalah/Appv2.git
         dest: /home/mouad/Appv2
+
+    - name: Ensure correct permissions for Appv2 directory
+      file:
+        path: /home/mouad/Appv2
+        owner: mouad
+        group: mouad
+        recurse: yes

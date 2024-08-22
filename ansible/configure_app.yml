@@ -1,7 +1,10 @@
 ---
 - hosts: workers
+  vars_files:
+    - sec_vault.yml
   become: yes
   gather_facts: yes
+  
   tasks:
     - name: Update apt cache
       apt:
@@ -85,18 +88,3 @@
       git:
         repo: https://{{GITHUB_USER|urlencode}}:{{GITHUB_TOKEN|urlencode}}@github.com/mouad-oussalah/Appv2.git
         dest: /home/mouad/Appv2
-
-    # - name: Ensure app directory exists
-    #   file:
-    #     path: /home/mouad/app
-    #     state: directory
-    #     mode: '0755'
-
-
-    # - name: Build Docker image
-    #   community.docker.docker_image:
-    #     name: olympicplayers-app
-    #     build:
-    #       path: /home/mouad/app
-    #     source: build
-    #   become: yes

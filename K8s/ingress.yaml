@@ -15,3 +15,7 @@ spec:
             name: web
             port: 
               number: 80
+status:
+  LoadBalancer:
+    ingress:
+      - ip: 34.29.98.12

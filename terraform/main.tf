@@ -44,7 +44,8 @@ resource "google_compute_firewall" "kubernetes_ports" {
       "30000-32767", # NodePort services
       "80",     # Ingress (HTTP)
       "443",    # Ingress (HTTPS)
-      "8080"    # Metrics server
+      "8080" ,   # Metrics server
+      "10443"   # microk8s
     ]
   }
 
@@ -85,10 +86,11 @@ resource "google_compute_instance" "vm_app" {
   zone         = "us-central1-a"
 
   boot_disk {
-    initialize_params {
-      image = "ubuntu-os-cloud/ubuntu-2204-lts"
-    }
+  initialize_params {
+    image = "ubuntu-os-cloud/ubuntu-2204-lts"
+    size  = 50  
   }
+}
 
   network_interface {
     network    = google_compute_network.vpc_network.name

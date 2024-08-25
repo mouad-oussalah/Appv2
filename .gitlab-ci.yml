@@ -1,0 +1,76 @@
+stages:
+  - validate
+  - build
+  - provision
+  - configure
+  - deploy
+
+variables:
+  DOCKER_IMAGE: mouadoussallah/olympicplayers-app
+  TF_VAR_project_id: "dxc-project-1234"
+
+validate:
+  stage: validate
+  image: hashicorp/terraform:latest
+  script:
+    - cd terraform
+    - terraform init
+    - terraform validate
+
+build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -t $DOCKER_IMAGE:$CI_COMMIT_SHA .
+    - docker push $DOCKER_IMAGE:$CI_COMMIT_SHA
+    - docker tag $DOCKER_IMAGE:$CI_COMMIT_SHA $DOCKER_IMAGE:latest
+    - docker push $DOCKER_IMAGE:latest
+
+provision:
+  stage: provision
+  image: hashicorp/terraform:latest
+  script:
+    - cd terraform
+    - terraform init
+    - terraform apply -auto-approve
+  when: manual
+
+configure:
+  stage: configure
+  image: willhallonline/ansible:latest
+  before_script:
+    - echo "$GCP_SERVICE_ACCOUNT_KEY" > /tmp/gcp-key.json
+    - export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-key.json
+    - pip install google-auth requests kubernetes
+  script:
+    - ansible-galaxy collection install google.cloud kubernetes.core
+    - ansible-inventory -i gcp_compute.yml --list
+    - ansible-playbook -i gcp_compute.yml main.yml
+  after_script:
+    - rm /tmp/gcp-key.json
+  when: manual
+
+deploy:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  before_script:
+    - echo "$GCP_SERVICE_ACCOUNT_KEY" > /tmp/gcp-key.json
+    - export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-key.json
+    - gcloud auth activate-service-account --key-file=/tmp/gcp-key.json
+    - gcloud container clusters get-credentials your-cluster-name --zone your-zone --project $TF_VAR_project_id
+  script:
+    - kubectl apply -f K8s/secret.yaml
+    - kubectl apply -f K8s/configmap.yaml
+    - kubectl apply -f K8s/ingress.yaml
+    - kubectl apply -f K8s/web-deployment.yaml
+    - kubectl apply -f K8s/postgres-deployment.yaml
+    - ansible-playbook -i gcp_compute.yml setup_argocd.yml
+  after_script:
+    - rm /tmp/gcp-key.json
+  only:
+    - main
+  when: manual

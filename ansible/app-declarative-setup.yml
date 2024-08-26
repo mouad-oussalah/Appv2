@@ -1,0 +1,24 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: olympicplayers-app
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/mouad-oussalah/Appv2.git
+    targetRevision: HEAD
+    path: K8s
+  destination: 
+    server: https://kubernetes.default.svc
+    namespace: default
+
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+
+    automated:
+      selfHeal: true
+      prune: true

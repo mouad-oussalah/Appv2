@@ -16,7 +16,7 @@
           - curl
           - gnupg
           - lsb-release
-          - software-properties-common
+          - +software-properties-common
         state: present
 
     - name: Add Docker GPG apt Key
@@ -52,6 +52,210 @@
         name: mouad
         groups: docker
         append: yes
+    - name: Install Java OpenJDK 17
+      apt:
+        name: openjdk-17-jre
+        state: present
+        update_cache: yes
+
+    - name: Verify Java version
+      command: java -version
+      register: java_version_output
+      failed_when: java_version_output.rc != 0
+      changed_when: false
+      check_mode: no
+      ignore_errors: yes
+
+    - name: Print Java version
+      debug:
+        msg: "{{ java_version_output.stdout }}"
+
+    - name: Download Jenkins GPG key
+      get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+        dest: /usr/share/keyrings/jenkins-keyring.asc
+        mode: '0644'
+
+    - name: Add Jenkins repository
+      ansible.builtin.shell: |
+        echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" | tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Jenkins
+      apt:
+        name: jenkins
+        state: present
+
+    - name: Ensure Jenkins service is started and enabled
+      systemd:
+        name: jenkins
+        state: started
+        enabled: yes
+
+    - name: Create Prometheus group
+      group:
+        name: prometheus
+        state: present
+
+    - name: Create Prometheus user
+      user:
+        name: prometheus
+        group: prometheus
+        create_home: no
+        shell: /sbin/nologin
+
+    - name: Download Prometheus
+      get_url:
+        url: https://github.com/prometheus/prometheus/releases/download/v2.30.3/prometheus-2.30.3.linux-amd64.tar.gz
+        dest: /tmp/prometheus.tar.gz
+
+    - name: Extract Prometheus
+      unarchive:
+        src: /tmp/prometheus.tar.gz
+        dest: /opt
+        remote_src: yes
+
+    - name: Change ownership of Prometheus files
+      file:
+        path: /opt/prometheus-2.30.3.linux-amd64
+        state: directory
+        owner: prometheus
+        group: prometheus
+        recurse: yes
+
+    - name: Create Prometheus data directory
+      file:
+        path: /opt/prometheus-2.30.3.linux-amd64/data
+        state: directory
+        owner: prometheus
+        group: prometheus
+        mode: '0700'
+
+    - name: Create Prometheus service file
+      copy:
+        content: |
+          [Unit]
+          Description=Prometheus
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          User=prometheus
+          Group=prometheus
+          Type=simple
+          ExecStart=/opt/prometheus-2.30.3.linux-amd64/prometheus --config.file=/opt/prometheus-2.30.3.linux-amd64/prometheus.yml --storage.tsdb.path=/opt/prometheus-2.30.3.linux-amd64/data
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/prometheus.service
+        mode: '0644'
+
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start Prometheus service
+      systemd:
+        name: prometheus
+        state: started
+        enabled: yes
+
+    - name: Create Alertmanager group
+      group:
+        name: alertmanager
+        state: present
+
+    - name: Create Alertmanager user
+      user:
+        name: alertmanager
+        group: alertmanager
+        create_home: no
+        shell: /sbin/nologin
+
+    - name: Download Alertmanager
+      get_url:
+        url: https://github.com/prometheus/alertmanager/releases/download/v0.23.0/alertmanager-0.23.0.linux-amd64.tar.gz
+        dest: /tmp/alertmanager.tar.gz
+
+    - name: Extract Alertmanager
+      unarchive:
+        src: /tmp/alertmanager.tar.gz
+        dest: /opt
+        remote_src: yes
+
+    - name: Change ownership of Alertmanager files
+      file:
+        path: /opt/alertmanager-0.23.0.linux-amd64
+        state: directory
+        owner: alertmanager
+        group: alertmanager
+        recurse: yes
+
+    - name: Create Alertmanager data directory
+      file:
+        path: /opt/alertmanager-0.23.0.linux-amd64/data
+        state: directory
+        owner: alertmanager
+        group: alertmanager
+        mode: '0700'
+
+    - name: Create Alertmanager configuration file
+      copy:
+        content: |
+          global:
+            resolve_timeout: 5m
+
+          route:
+            receiver: 'default'
+
+          receivers:
+            - name: 'default'
+        dest: /opt/alertmanager-0.23.0.linux-amd64/alertmanager.yml
+        owner: alertmanager
+        group: alertmanager
+        mode: '0644'
+
+    - name: Create Alertmanager service file
+      copy:
+        content: |
+          [Unit]
+          Description=Alertmanager
+          Wants=network-online.target
+          After=network-online.target
+
+          [Service]
+          User=alertmanager
+          Group=alertmanager
+          Type=simple
+          ExecStart=/opt/alertmanager-0.23.0.linux-amd64/alertmanager --config.file=/opt/alertmanager-0.23.0.linux-amd64/alertmanager.yml --storage.path=/opt/alertmanager-0.23.0.linux-amd64/data
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/alertmanager.service
+        mode: '0644'
+
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start Alertmanager service
+      systemd:
+        name: alertmanager
+        state: started
+        enabled: yes
+
+    - name: Install Grafana
+      apt:
+        deb: https://dl.grafana.com/oss/release/grafana_8.2.2_amd64.deb
+
+    - name: Enable and start Grafana service
+      systemd:
+        name: grafana-server
+        state: started
+        enabled: yes
 
     - name: Install Ansible and Python packages
       tags: installansible
@@ -67,7 +271,6 @@
         name:
           - google-auth
           - requests
-          - kubernetes
 
 
     - name: Install Ansible collections
@@ -75,15 +278,14 @@
         cmd: ansible-galaxy collection install {{ item }}
       loop:
         - google.cloud
-        - kubernetes.core
         - community.general
         - community.docker
 
 
     - name: copy gcp key 
       copy:
-       src: /home/mouad/gcp-key.json
-       dest: /home/mouad/gcp-key.json
+        src: /home/mouad/gcp-key.json
+        dest: /home/mouad/gcp-key.json
 
     - name: copy ssh key
       tags: copysshkey
@@ -99,35 +301,9 @@
         path: ~/.bashrc
         line: export GCP_SERVICE_ACCOUNT_FILE=/home/mouad/gcp-key.json
 
-    - name: Download and add Kubernetes GPG key
-      get_url:
-        url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
-        dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-        mode: '0644'
-    
-    - name: Add Kubernetes repository
-      apt_repository:
-        repo: deb [trusted=yes] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
-        state: present
-
     - name: Update apt cache
       apt:
         update_cache: yes
-    
-    - name: Install Kubernetes components
-      apt:
-        name:
-          - kubelet
-          - kubeadm
-          - kubectl
-        state: present
-    
-
-    - name: Install ArgoCD CLI
-      get_url:
-        url: https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-        dest: /usr/local/bin/argocd
-        mode: '0555'
 
     - name: git clone
       tags: clonecode

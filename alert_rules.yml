@@ -1,0 +1,29 @@
+groups:
+- name: app_alerts
+  rules:
+  - alert: AppDown
+    expr: up{job="my_app"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Application is down"
+      description: "The application has been down for more than 1 minute."
+
+  - alert: HighResponseTime
+    expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High response time"
+      description: "95th percentile of response times is above 2 seconds for more than 5 minutes."
+
+  - alert: HighErrorRate
+    expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High error rate"
+      description: "Error rate is above 5% for more than 5 minutes."

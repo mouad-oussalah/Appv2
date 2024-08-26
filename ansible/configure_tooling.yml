@@ -16,7 +16,7 @@
           - curl
           - gnupg
           - lsb-release
-          - +software-properties-common
+          - software-properties-common
         state: present
 
     - name: Add Docker GPG apt Key

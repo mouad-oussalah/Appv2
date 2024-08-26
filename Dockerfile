@@ -11,6 +11,9 @@ COPY . .
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
+# test stage
+FROM base as test
+RUN pytest
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000

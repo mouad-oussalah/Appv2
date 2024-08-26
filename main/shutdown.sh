@@ -1,0 +1,1 @@
+command: microk8s kubectl scale deployment web --replicas=0

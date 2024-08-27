@@ -4,7 +4,7 @@
     - sec_vault.yml
   become: yes
   gather_facts: yes
-  
+
   tasks:
     - name: Update apt cache
       apt:
@@ -50,10 +50,14 @@
     - name: Reset connection to allow user changes to affect ansible user
       meta: reset_connection
 
+    - name: Ensure MicroK8s is running
+      command: microk8s start
+      changed_when: false
+
     - name: Wait for MicroK8s to be ready
       command: microk8s status --wait-ready
       changed_when: false
-      
+
     - name: Enable necessary MicroK8s addons
       command: microk8s enable dns dashboard storage ingress
       changed_when: false
@@ -76,20 +80,23 @@
         owner: mouad
         group: mouad
         mode: '0600'
+
     - name: Install ArgoCD CLI
       get_url:
         url: https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
         dest: /usr/local/bin/argocd
         mode: '0555'
-    
 
+    - name: Remove existing Appv2 directory
+      file:
+        path: /home/mouad/Appv2
+        state: absent
 
     - name: Git clone
       tags: clonecodeapp
       git:
         repo: https://{{GITHUB_USER|urlencode}}:{{GITHUB_TOKEN|urlencode}}@github.com/mouad-oussalah/Appv2.git
         dest: /home/mouad/Appv2
-        force: yes
 
     - name: Download Argo CD install.yaml
       ansible.builtin.get_url:
@@ -105,17 +112,35 @@
       ansible.builtin.shell: sed -i 's|/usr/local/bin/argocd-server|&\n        - --insecure|' /tmp/install.yaml
       when: grep_result.rc != 0
 
+    - name: Set KUBECONFIG environment variable
+      ansible.builtin.shell: |
+        echo "export KUBECONFIG=/var/snap/microk8s/current/credentials/client.config" >> ~/.bashrc
+        source ~/.bashrc
+      args:
+        executable: /bin/bash
+
+    - name: Create argocd namespace
+      ansible.builtin.command:
+        cmd: microk8s kubectl create namespace argocd
+      ignore_errors: yes
+
+    - name: Wait for API server to be ready
+      ansible.builtin.wait_for:
+        timeout: 30
+
     - name: Apply Argo CD manifests
       ansible.builtin.command:
-        cmd: kubectl apply -n argocd -f /tmp/install.yaml
+        cmd: microk8s kubectl apply -n argocd -f /tmp/install.yaml
+      environment:
+        KUBECONFIG: /var/snap/microk8s/current/ansible/credentials/client.config
 
     - name: Apply ingress_argocd.yaml
       ansible.builtin.command:
-        cmd: kubectl apply -f ~/Appv2/ingress_argocd.yaml
+        cmd: microk8s kubectl apply -f ~/Appv2/ansible/ingress_argocd.yaml
 
     - name: Apply argocd-declarative-setup.yml
       ansible.builtin.command:
-        cmd: kubectl apply -f ~/Appv2/argocd-declarative-setup.yml
+        cmd: microk8s kubectl apply -f ~/Appv2/argocd-declarative-setup.yml
 
     - name: Ensure correct permissions for Appv2 directory
       file:
@@ -137,10 +162,10 @@
 
     - name: Apply Prometheus configuration
       command: microk8s kubectl apply -f /home/mouad/Appv2/prometheus-config.yml
-      
+
     - name: Apply Grafana configuration
       command: microk8s kubectl apply -f /home/mouad/Appv2/grafana-config.yml
-      
+
     - name: Apply Alertmanager configuration
       command: microk8s kubectl apply -f /home/mouad/Appv2/alertmanager-config.yml
 

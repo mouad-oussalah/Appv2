@@ -89,6 +89,7 @@
       git:
         repo: https://{{GITHUB_USER|urlencode}}:{{GITHUB_TOKEN|urlencode}}@github.com/mouad-oussalah/Appv2.git
         dest: /home/mouad/Appv2
+        force: yes
 
     - name: Download Argo CD install.yaml
       ansible.builtin.get_url:
@@ -106,15 +107,15 @@
 
     - name: Apply Argo CD manifests
       ansible.builtin.command:
-      cmd: kubectl apply -n argocd -f /tmp/install.yaml
+        cmd: kubectl apply -n argocd -f /tmp/install.yaml
 
     - name: Apply ingress_argocd.yaml
       ansible.builtin.command:
-      cmd: kubectl apply -f ~/Appv2/ingress_argocd.yaml
+        cmd: kubectl apply -f ~/Appv2/ingress_argocd.yaml
 
     - name: Apply argocd-declarative-setup.yml
       ansible.builtin.command:
-      cmd: kubectl apply -f ~/Appv2/argocd-declarative-setup.yml
+        cmd: kubectl apply -f ~/Appv2/argocd-declarative-setup.yml
 
     - name: Ensure correct permissions for Appv2 directory
       file:

@@ -71,7 +71,54 @@ resource "google_compute_instance" "vm_tooling" {
     }
   }
 
-metadata = {
+  metadata = {
+    ssh-keys = "mouad:${file("~/.ssh/id_ed25519.pub")}"
+  }
+
+  tags = ["tooling"]
+
+  
+}
+
+resource "google_compute_resource_policy" "daily_schedule" {
+  name   = "vm-daily-schedule"
+  region = "us-central1"
+  description = "Start and stop VM instances during weekdays"
+
+  instance_schedule_policy {
+    vm_start_schedule {
+      schedule = "45 7 * * 1-5"
+    }
+    vm_stop_schedule {
+      schedule = "15 21 * * 1-5"
+    }
+    time_zone = "Africa/Casablanca"
+  }
+}
+
+resource "google_compute_instance" "vm_app" {
+  name         = "vm-app"
+  machine_type = "e2-standard-4"
+  zone         = "us-central1-a"
+  resource_policies = [google_compute_resource_policy.daily_schedule.id]
+
+
+  boot_disk {
+  initialize_params {
+    image = "ubuntu-os-cloud/ubuntu-2204-lts"
+    size  = 50  
+  }
+}
+
+  network_interface {
+    network    = google_compute_network.vpc_network.name
+    subnetwork = google_compute_subnetwork.subnet.name
+    access_config {
+      # Ephemeral public IP
+    }
+  }
+
+  metadata = {
     ssh-keys = "mouad:${file("~/.ssh/id_ed25519.pub")}"
     startup-script = file("${path.module}/startup.sh")
     shutdown-script = file("${path.module}/shutdown.sh")
@@ -86,26 +133,26 @@ metadata = {
   }
 }
 
-resource "google_compute_resource_policy" "vm_app_schedule" {
-  name   = "vm-app-schedule"
-  region = "us-central1"
+# resource "google_compute_resource_policy" "vm_app_schedule" {
+#   name   = "vm-app-schedule"
+#   region = "us-central1"
   
-  instance_schedule_policy {
-    vm_start_schedule {
-      schedule = "0 8 * * 1-5"
-    }
-    vm_stop_schedule {
-      schedule = "0 21 * * 1-5"
-    }
-    time_zone = "Europe/Paris"
-  }
-}
+#   instance_schedule_policy {
+#     vm_start_schedule {
+#       schedule = "45 7 * * 1-5"
+#     }
+#     vm_stop_schedule {
+#       schedule = "45 14 * * 1-5"
+#     }
+#     time_zone = "Africa/Casablanca"
+#   }
+# }
 
-resource "google_compute_instance_resource_policy_attachment" "vm_app_schedule_attachment" {
-  instance = google_compute_instance.vm_app.name
-  resource_policy = google_compute_resource_policy.vm_app_schedule.id
-  zone = "us-central1-a"
-}
+# resource "google_compute_instance_resource_policy_attachment" "vm_app_schedule_attachment" {
+#   instance = google_compute_instance.vm_app.name
+#   resource_policy = google_compute_resource_policy.vm_app_schedule.id
+#   zone = "us-central1-a"
+# }
 
 data "google_compute_instance" "vm_tooling" {
   name = google_compute_instance.vm_tooling.name

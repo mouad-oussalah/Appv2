@@ -136,7 +136,7 @@
 
     - name: Apply ingress_argocd.yaml
       ansible.builtin.command:
-        cmd: microk8s kubectl apply -f ~/Appv2/ansible/ingress_argocd.yaml
+        cmd: microk8s kubectl apply -f ~/Appv2/ansible/ingress-argocd.yaml
 
     - name: Apply argocd-declarative-setup.yml
       ansible.builtin.command:

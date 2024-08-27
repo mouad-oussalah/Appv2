@@ -45,7 +45,10 @@ resource "google_compute_firewall" "kubernetes_ports" {
       "80",     # Ingress (HTTP)
       "443",    # Ingress (HTTPS)
       "8080" ,   # Metrics server
-      "10443"   # microk8s
+      "10443",   # microk8s
+      "9093",  #prometheus
+      "9090",
+      "9100"
     ]
   }
 

@@ -2,9 +2,43 @@
 prometheus:
   service:
     type: NodePort
+  prometheusSpec:
+    additionalScrapeConfigs:
+      - job_name: 'app-health-check'
+        metrics_path: '/health'
+        static_configs:
+          - targets: ['votre-app-service.votre-namespace.svc.cluster.local:8080']
+        scrape_interval: 10s
+
 grafana:
   service:
     type: NodePort
+
 alertmanager:
   service:
     type: NodePort
+  config:
+    global:
+      resolve_timeout: 5m
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'mouadoussalah1@gmail.com'
+      smtp_auth_username: 'mouadoussalah1@gmail.com'
+      smtp_auth_password: 'votre-mot-de-passe-d-application'
+      smtp_require_tls: true
+
+    route:
+      receiver: 'email-notifications'
+      group_by: ['alertname', 'job']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      routes:
+        - receiver: 'email-notifications'
+          match:
+            send_to_email: 'true'
+
+    receivers:
+    - name: 'email-notifications'
+      email_configs:
+      - to: 'mouadoussalah1@gmail.com'
+        send_resolved: true

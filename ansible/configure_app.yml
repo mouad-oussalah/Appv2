@@ -149,12 +149,12 @@
         group: mouad
         recurse: yes
 
-    - name: Enable Prometheus, Grafana, and Alertmanager addons in MicroK8s
-      command: microk8s enable prometheus
+    # - name: Enable Prometheus, Grafana, and Alertmanager addons in MicroK8s
+    #   command: microk8s enable prometheus
 
-    - name: Wait for Prometheus and Grafana to be ready
-      command: microk8s kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus -n monitoring --timeout=300s
-      changed_when: false
+    # - name: Wait for Prometheus and Grafana to be ready
+    #   command: microk8s kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus -n monitoring --timeout=300s
+    #   changed_when: false
 
     # - name: Create monitoring namespace
     #   command: microk8s kubectl create namespace monitoring

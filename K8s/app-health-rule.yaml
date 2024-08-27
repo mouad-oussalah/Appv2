@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: app-health-monitor
+  labels:
+    app: kube-prometheus-stack
+    release: kube-prometheus-stack
+spec:
+  groups:
+  - name: app.rules
+    rules:
+    - alert: ApplicationDown
+      expr: probe_success{job="app-health-check"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        send_to_email: 'true'
+      annotations:
+        summary: "Application is down"
+        description: "L'application est indisponible depuis plus d'une minute."

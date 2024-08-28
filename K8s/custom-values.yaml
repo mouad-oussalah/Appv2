@@ -22,7 +22,7 @@ alertmanager:
       smtp_smarthost: 'smtp.gmail.com:587'
       smtp_from: 'mouadoussalah2016@gmail.com'
       smtp_auth_username: 'mouadoussalah2016@gmail.com'
-      smtp_auth_password: '${SMTP_PASSWORD}'
+      smtp_auth_password: 'ffjv kiqc rkcx otfs'
       smtp_require_tls: true
 
     route:
@@ -41,16 +41,3 @@ alertmanager:
       email_configs:
       - to: 'mouadoussalah2016@gmail.com'
         send_resolved: true
-
-  extraSecretMounts:
-    - name: smtp-password
-      secretName: alertmanager-smtp-secret
-      mountPath: /etc/alertmanager/secrets
-      readOnly: true
-
-  extraEnv:
-    - name: SMTP_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: alertmanager-smtp-secret
-          key: password

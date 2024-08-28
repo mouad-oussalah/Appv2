@@ -1,4 +1,3 @@
-# custom-values.yaml
 prometheus:
   service:
     type: NodePort
@@ -7,7 +6,7 @@ prometheus:
       - job_name: 'app-health-check'
         metrics_path: '/health'
         static_configs:
-          - targets: ['votre-app-service.votre-namespace.svc.cluster.local:8080']
+          - targets: ['web.default.svc.cluster.local:5000']  # Adjust this to match your actual service name and port
         scrape_interval: 10s
 
 grafana:
@@ -21,9 +20,9 @@ alertmanager:
     global:
       resolve_timeout: 5m
       smtp_smarthost: 'smtp.gmail.com:587'
-      smtp_from: 'mouadoussalah1@gmail.com'
-      smtp_auth_username: 'mouadoussalah1@gmail.com'
-      smtp_auth_password: 'votre-mot-de-passe-d-application'
+      smtp_from: 'mouadoussalah2016@gmail.com'
+      smtp_auth_username: 'mouadoussalah2016@gmail.com'
+      smtp_auth_password: '${SMTP_PASSWORD}'
       smtp_require_tls: true
 
     route:
@@ -40,5 +39,18 @@ alertmanager:
     receivers:
     - name: 'email-notifications'
       email_configs:
-      - to: 'mouadoussalah1@gmail.com'
+      - to: 'mouadoussalah2016@gmail.com'
         send_resolved: true
+
+  extraSecretMounts:
+    - name: smtp-password
+      secretName: alertmanager-smtp-secret
+      mountPath: /etc/alertmanager/secrets
+      readOnly: true
+
+  extraEnv:
+    - name: SMTP_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: alertmanager-smtp-secret
+          key: password

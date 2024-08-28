@@ -37,5 +37,15 @@ def get_players():
         app.logger.error(f"Erreur lors de la récupération des joueurs: {str(e)}")
         return jsonify({"error": "Une erreur s'est produite lors de la récupération des joueurs"}), 500
 
+@app.route('/health')
+def health_check():
+    try:
+        # Check database connection
+        db.session.execute('SELECT 1')
+        return jsonify({"status": "healthy"}), 200
+    except Exception as e:
+        app.logger.error(f"Health check failed: {str(e)}")
+        return jsonify({"status": "unhealthy", "error": str(e)}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

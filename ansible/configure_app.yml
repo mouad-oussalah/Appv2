@@ -148,31 +148,3 @@
         owner: mouad
         group: mouad
         recurse: yes
-
-    # - name: Enable Prometheus, Grafana, and Alertmanager addons in MicroK8s
-    #   command: microk8s enable prometheus
-
-    # - name: Wait for Prometheus and Grafana to be ready
-    #   command: microk8s kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus -n monitoring --timeout=300s
-    #   changed_when: false
-
-    # - name: Create monitoring namespace
-    #   command: microk8s kubectl create namespace monitoring
-    #   ignore_errors: yes
-
-    # - name: Apply Prometheus configuration
-    #   command: microk8s kubectl apply -f /home/mouad/Appv2/prometheus-config.yml
-
-    # - name: Apply Grafana configuration
-    #   command: microk8s kubectl apply -f /home/mouad/Appv2/grafana-config.yml
-
-    # - name: Apply Alertmanager configuration
-    #   command: microk8s kubectl apply -f /home/mouad/Appv2/alertmanager-config.yml
-
-    # - name: Get Grafana service NodePort
-    #   command: microk8s kubectl get svc -n monitoring grafana -o jsonpath='{.spec.ports[0].nodePort}'
-    #   register: grafana_nodeport
-
-    # - name: Display Grafana access information
-    #   debug:
-    #     msg: "Access Grafana at http://{{ ansible_host }}:{{ grafana_nodeport.stdout }}"

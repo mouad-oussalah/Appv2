@@ -1,20 +1,20 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: app-health-monitor
+  name: test-email-alert
   labels:
     app: kube-prometheus-stack
     release: prometheus-stack
 spec:
   groups:
-  - name: app.rules
+  - name: test.rules
     rules:
-    - alert: ApplicationDown
-      expr: probe_success{job="app-health-check"} == 0
+    - alert: TestEmailAlert
+      expr: vector(1)
       for: 1m
       labels:
         severity: critical
         send_to_email: 'true'
       annotations:
-        summary: "Application is down"
-        description: "The application has been unavailable for more than one minute."
+        summary: "Test Email Alert"
+        description: "This is a test alert to verify email notifications."

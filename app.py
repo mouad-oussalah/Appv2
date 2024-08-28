@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import os
 
+
 app = Flask(__name__)
 
 # Configuration de la base de données
@@ -9,6 +10,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'postgresql://
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+
 
 class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True)

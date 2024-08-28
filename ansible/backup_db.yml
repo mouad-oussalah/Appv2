@@ -1,12 +1,10 @@
 ---
-- name: Setup Automated Database Backup for Kubernetes
+- name: Setup Weekly Database Backup for Kubernetes
   hosts: workers
   become: yes
   vars:
     db_name: playersdb
     backup_dir: /home/mouad/backups
-    cron_minute: "0"
-    cron_hour: "2"
 
   tasks:
     - name: Ensure backup directory exists
@@ -27,7 +25,7 @@
           microk8s kubectl exec -i $POSTGRES_POD -- pg_dump -U postgres -d {{ db_name }} > $BACKUP_FILE
           if [ $? -eq 0 ]; then
             gzip $BACKUP_FILE
-            find {{ backup_dir }} -name "{{ db_name }}_*.sql.gz" -type f -mtime +7 -delete
+            find {{ backup_dir }} -name "{{ db_name }}_*.sql.gz" -type f -mtime +30 -delete
             echo "Backup completed successfully: ${BACKUP_FILE}.gz"
           else
             echo "Backup failed" >&2
@@ -37,11 +35,12 @@
         owner: mouad
         group: mouad
 
-    - name: Setup cron job for backup
+    - name: Setup cron job for weekly backup
       cron:
-        name: "Kubernetes Database Backup"
-        minute: "{{ cron_minute }}"
-        hour: "{{ cron_hour }}"
+        name: "Weekly Kubernetes Database Backup"
+        minute: "30"
+        hour: "17"
+        weekday: "5"
         job: "/usr/local/bin/backup_db.sh"
         user: mouad
 
@@ -67,18 +66,3 @@
         name: atd
         state: started
         enabled: yes
-
-    - name: Schedule immediate backup using at
-      at:
-        command: /usr/local/bin/backup_db.sh
-        count: 1
-        units: minutes
-      become: yes
-      become_user: mouad
-
-    - name: Trigger backup script (asynchronous)
-      command: /usr/local/bin/backup_db.sh
-      async: 3600
-      poll: 0
-      become: yes
-      become_user: mouad

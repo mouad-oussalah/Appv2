@@ -1,0 +1,34 @@
+---
+- name: Adjust Kubernetes resources based on time
+  hosts: workers
+  become: yes
+  vars:
+    full_capacity_cpu: "4"
+    full_capacity_memory: "8Gi"
+    half_capacity_cpu: "2"
+    half_capacity_memory: "4Gi"
+
+  tasks:
+    - name: Get current hour
+      command: date +%H
+      register: current_hour
+
+    - name: Set capacity based on time
+      set_fact:
+        target_cpu: "{{ full_capacity_cpu if current_hour.stdout|int >= 8 and current_hour.stdout|int < 18 else half_capacity_cpu }}"
+        target_memory: "{{ full_capacity_memory if current_hour.stdout|int >= 8 and current_hour.stdout|int < 18 else half_capacity_memory }}"
+
+    - name: Update Kubernetes deployment resources
+      command: >
+        microk8s kubectl set resources deployment web
+        --requests=cpu={{ target_cpu }},memory={{ target_memory }}
+        --limits=cpu={{ target_cpu }},memory={{ target_memory }}
+      when: "current_hour.stdout|int >= 8 and current_hour.stdout|int < 21"
+
+    - name: Scale down deployment outside working hours
+      command: microk8s kubectl scale deployment web --replicas=0
+      when: "current_hour.stdout|int < 8 or current_hour.stdout|int >= 21"
+
+    - name: Scale up deployment during working hours
+      command: microk8s kubectl scale deployment web --replicas=2
+      when: "current_hour.stdout|int >= 8 and current_hour.stdout|int < 21"

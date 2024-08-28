@@ -2,23 +2,41 @@ prometheus:
   service:
     type: NodePort
   prometheusSpec:
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
     additionalScrapeConfigs:
       - job_name: 'app-health-check'
         metrics_path: '/health'
         static_configs:
-          - targets: ['web.default.svc.cluster.local:5000']  # Adjust this to match your actual service name and port
+          - targets: ['web.default.svc.cluster.local:5000']
         scrape_interval: 10s
 
 grafana:
   service:
     type: NodePort
+  persistence:
+    enabled: true
+    size: 10Gi
 
 alertmanager:
   service:
     type: NodePort
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
   config:
     global:
-      resolve_timeout: 1m
+      resolve_timeout: 5m
       smtp_smarthost: 'smtp.gmail.com:587'
       smtp_from: 'mouadoussalah2016@gmail.com'
       smtp_auth_username: 'mouadoussalah2016@gmail.com'

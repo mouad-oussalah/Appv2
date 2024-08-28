@@ -1,6 +1,6 @@
 prometheus:
   service:
-    type: ClusterIP
+    type: NodePort
   prometheusSpec:
     storageSpec:
       volumeClaimTemplate:
@@ -23,14 +23,14 @@ prometheus:
 
 grafana:
   service:
-    type: ClusterIP
+    type: NodePort
   persistence:
     enabled: true
     size: 10Gi
 
 alertmanager:
   service:
-    type: ClusterIP
+    type: NodePort
   alertmanagerSpec:
     storage:
       volumeClaimTemplate:
@@ -65,37 +65,3 @@ alertmanager:
       email_configs:
       - to: 'mouadoussalah2016@gmail.com'
         send_resolved: true
-
-ingress:
-  enabled: true
-  ingressClassName: nginx
-  annotations:
-    kubernetes.io/ingress.class: nginx
-  hosts:
-    - host: prometheus.local
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: prometheus-stack-kube-prom-prometheus
-              port: 
-                number: 9090
-    - host: grafana.local
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: prometheus-stack-grafana
-              port: 
-                number: 80
-    - host: alertmanager.local
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: prometheus-stack-kube-prom-alertmanager
-              port: 
-                number: 9093

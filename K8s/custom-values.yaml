@@ -15,6 +15,11 @@ prometheus:
         static_configs:
           - targets: ['web.default.svc.cluster.local:5000']
         scrape_interval: 10s
+      - job_name: 'flask-app'
+        metrics_path: '/metrics'
+        static_configs:
+          - targets: ['web.default.svc.cluster.local:5000']
+        scrape_interval: 15s
 
 grafana:
   service:

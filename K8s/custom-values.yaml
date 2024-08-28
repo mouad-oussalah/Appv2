@@ -18,7 +18,7 @@ alertmanager:
     type: NodePort
   config:
     global:
-      resolve_timeout: 5m
+      resolve_timeout: 1m
       smtp_smarthost: 'smtp.gmail.com:587'
       smtp_from: 'mouadoussalah2016@gmail.com'
       smtp_auth_username: 'mouadoussalah2016@gmail.com'

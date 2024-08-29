@@ -1,6 +1,7 @@
 prometheus:
   service:
     type: NodePort
+    nodePort: null  # This will allow Kubernetes to assign an available port
   prometheusSpec:
     storageSpec:
       volumeClaimTemplate:
@@ -24,6 +25,7 @@ prometheus:
 grafana:
   service:
     type: NodePort
+    nodePort: null  # This will allow Kubernetes to assign an available port
   persistence:
     enabled: true
     size: 10Gi
@@ -31,6 +33,7 @@ grafana:
 alertmanager:
   service:
     type: NodePort
+    nodePort: null  # This will allow Kubernetes to assign an available port
   alertmanagerSpec:
     storage:
       volumeClaimTemplate:

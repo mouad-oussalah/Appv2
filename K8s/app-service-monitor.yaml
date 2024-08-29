@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: flask-app-monitor
+  labels:
+    release: kube-prometheus-stack  # This should match your Prometheus Operator release name
+spec:
+  selector:
+    matchLabels:
+      app: web  # This should match the label of your web application's service
+  endpoints:
+  - port: http  # This should match the name of the port in your service
+    path: /metrics
+    interval: 15s

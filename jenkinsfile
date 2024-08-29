@@ -1,0 +1,173 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_IMAGE = "mouadoussallah/olympicplayers-app"
+        BUILD_TAG = "${BUILD_ID}"
+        K8S_REPO_PATH = "${WORKSPACE}/Appv2"
+        K8S_MANIFEST_REPO = "https://github.com/mouad-oussalah/Appv2.git"
+        GIT_CREDENTIALS_ID = "github-pat"
+        PYTHON_PATH = "/usr/bin/python3"
+        PIP_PATH = "/usr/bin/pip3"
+        APP_REPO = "https://github.com/mouad-oussalah/Appv2.git"
+        DOCKER_CREDENTIALS_ID = "docker-hub-credentials"
+    }
+
+    stages {
+        stage('Cleanup Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage('Clone Application Repository') {
+            steps {
+                git url: "${APP_REPO}", branch: 'main', credentialsId: "${GIT_CREDENTIALS_ID}"
+            }
+        }
+
+        stage('Verify Environment') {
+            steps {
+                sh '''
+                    echo "Checking Python version:"
+                    ${PYTHON_PATH} --version
+
+                    echo "Checking pip version:"
+                    ${PIP_PATH} --version
+
+                    echo "Listing workspace contents:"
+                    ls -la
+
+                    echo "Checking for required files:"
+                    [ -f requirements.txt ] && echo "requirements.txt found" || (echo "requirements.txt not found" && exit 1)
+                    [ -f test_app.py ] && echo "test_app.py found" || (echo "test_app.py not found" && exit 1)
+                    [ -f Dockerfile ] && echo "Dockerfile found" || (echo "Dockerfile not found" && exit 1)
+                '''
+            }
+        }
+
+        stage('Docker Login') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                }
+            }
+        }
+
+        stage('Verify Docker Login') {
+            steps {
+                sh '''
+                    echo "Verifying Docker login..."
+                    docker info
+                    docker ps
+                '''
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh '${PIP_PATH} install -r requirements.txt'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh '${PYTHON_PATH} -m pytest test_app.py'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                    echo "Building Docker image..."
+                    docker build -t ${APP_IMAGE}:${BUILD_TAG} .
+                    echo "Docker images after build:"
+                    docker images
+                '''
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                sh '''
+                    echo "Pushing Docker image..."
+                    docker push ${APP_IMAGE}:${BUILD_TAG}
+                    echo "Push completed"
+                '''
+            }
+        }
+
+        stage('Clone Kubernetes Manifests Repo') {
+            steps {
+                dir("${K8S_REPO_PATH}") {
+                    git url: "${K8S_MANIFEST_REPO}", branch: 'main', credentialsId: "${GIT_CREDENTIALS_ID}"
+                }
+            }
+        }
+
+        stage('Update Kubernetes Manifests') {
+            steps {
+                script {
+                    def manifests = ['configmap.yaml', 'ingress.yaml', 'postgres-deployment.yaml', 'postgres-service.yaml', 'secret.yaml', 'web-deployment.yaml', 'web-service.yaml']
+                    def updated = false
+
+                    manifests.each { manifest ->
+                        def filePath = "${K8S_REPO_PATH}/${manifest}"
+                        if (fileExists(filePath)) {
+                            def content = readFile(filePath)
+                            def updatedContent = content.replaceAll(/image: .+/, "image: ${APP_IMAGE}:${BUILD_TAG}")
+                            if (content != updatedContent) {
+                                writeFile file: filePath, text: updatedContent
+                                updated = true
+                            }
+                        } else {
+                            echo "File ${filePath} does not exist."
+                        }
+                    }
+
+                    if (!updated) {
+                        echo 'No manifest files were updated.'
+                    }
+                }
+            }
+        }
+
+        stage('Push Updated Manifests to Git Repo') {
+            steps {
+                dir("${K8S_REPO_PATH}") {
+                    withCredentials([usernamePassword(credentialsId: "${GIT_CREDENTIALS_ID}", usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                        sh '''
+                            git config user.name "Jenkins"
+                            git config user.email "jenkins@example.com"
+                            git add .
+                            git diff --quiet && git diff --staged --quiet || (git commit -m "Update deployment manifest with new image tag: ${BUILD_TAG}" && git push https://${GIT_USER}:${GIT_PASS}@github.com/mouad-oussalah/Appv2.git main)
+                        '''
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            sh '''
+                if docker images ${APP_IMAGE}:${BUILD_TAG} --format "{{.Repository}}:{{.Tag}}" | grep -q "^${APP_IMAGE}:${BUILD_TAG}$"; then
+                    echo "Image ${APP_IMAGE}:${BUILD_TAG} found, attempting to remove..."
+                    if docker rmi ${APP_IMAGE}:${BUILD_TAG}; then
+                        echo "Image successfully removed."
+                    else
+                        echo "Failed to remove image. It might be in use."
+                    fi
+                else
+                    echo "Image ${APP_IMAGE}:${BUILD_TAG} not found, skipping removal."
+                fi
+            '''
+        }
+        success {
+            echo 'Build and deployment completed successfully!'
+        }
+        failure {
+            echo 'Build or deployment failed. Please check the logs.'
+        }
+    }
+}

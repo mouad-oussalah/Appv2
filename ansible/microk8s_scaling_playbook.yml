@@ -3,7 +3,7 @@
   hosts: workers
   become: yes
   vars:
-    ansible_playbook_path: "/home/mouad/Appv2/ansible/microk8s_scaling_playbook.yml"  # Update this path
+    scaling_script_path: "/usr/local/bin/scale_microk8s.sh"
   tasks:
     - name: Update apt cache
       apt:
@@ -12,7 +12,7 @@
     - name: Copy scaling script
       copy:
         src: scale_microk8s.sh
-        dest: /usr/local/bin/scale_microk8s.sh
+        dest: "{{ scaling_script_path }}"
         mode: '0755'
 
     - name: Set up cron jobs for scaling
@@ -32,27 +32,27 @@
           day: "*"
           month: "*"
           weekday: "1-5"
-          job: "/usr/bin/ansible-playbook {{ ansible_playbook_path }}"
+          job: "{{ scaling_script_path }} up"
         - name: "Scale MicroK8s Weekday Evening"
           minute: "0"
           hour: "18"
           day: "*"
           month: "*"
           weekday: "1-5"
-          job: "/usr/bin/ansible-playbook {{ ansible_playbook_path }}"
+          job: "{{ scaling_script_path }} down"
         - name: "Scale MicroK8s Weekend Midnight"
           minute: "0"
           hour: "0"
           day: "*"
           month: "*"
           weekday: "6,0"
-          job: "/usr/bin/ansible-playbook {{ ansible_playbook_path }}"
+          job: "{{ scaling_script_path }} zero"
 
     - name: Ensure scaling script is executable
       file:
-        path: /usr/local/bin/scale_microk8s.sh
+        path: "{{ scaling_script_path }}"
         mode: '0755'
 
     - name: Run scaling script
-      command: /usr/bin/ansible-playbook {{ ansible_playbook_path }}
+      command: "{{ scaling_script_path }} check"
       changed_when: false

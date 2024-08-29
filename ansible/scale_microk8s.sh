@@ -17,10 +17,10 @@ hour=$(date +%H)
 if [[ $day -le 5 ]]; then  # Weekday
     if [[ $hour -ge 8 && $hour -lt 18 ]]; then
         # Work hours: Monday to Friday, 08:00 to 18:00
-        scale_microk8s 1  # Scale up to 2 replicas
+        scale_microk8s 2  # Scale up to 2 replicas
     else
         # Off hours
-        scale_microk8s 1  # Scale down to 1 replica
+        scale_microk8s 2  # Scale down to 1 replica
     fi
 else
     # Weekend

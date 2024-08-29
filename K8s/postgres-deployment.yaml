@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: mouadoussallah/olympicplayers-app:18
+        image: postgres:13
         env:
         - name: POSTGRES_DB
           valueFrom:

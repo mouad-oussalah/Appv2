@@ -20,7 +20,7 @@ if [[ $day -le 5 ]]; then  # Weekday
         scale_microk8s 2  # Scale up to 2 replicas
     else
         # Off hours
-        scale_microk8s 2  # Scale down to 1 replica
+        scale_microk8s 1  # Scale down to 1 replica
     fi
 else
     # Weekend

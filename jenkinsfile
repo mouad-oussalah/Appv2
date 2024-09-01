@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        APP_IMAGE = "mouadoussallah/olympicplayers-app"
+        APP_IMAGE = "mouadoussalah/olympicplayers-app"
         BUILD_TAG = "${BUILD_ID}"
         K8S_REPO_PATH = "${WORKSPACE}/Appv2"
         K8S_MANIFEST_REPO = "https://github.com/mouad-oussalah/Appv2.git"
@@ -108,11 +108,11 @@ pipeline {
         stage('Update Kubernetes Manifests') {
             steps {
                 script {
-                    def manifests = ['configmap.yaml', 'ingress.yaml', 'postgres-deployment.yaml', 'postgres-service.yaml', 'secret.yaml', 'web-deployment.yaml', 'web-service.yaml']
+                    def manifests = [ 'web-deployment.yaml']
                     def updated = false
 
                     manifests.each { manifest ->
-                        def filePath = "${K8S_REPO_PATH}/${manifest}"
+                        def filePath = "${K8S_REPO_PATH}/K8s/${manifest}"
                         if (fileExists(filePath)) {
                             def content = readFile(filePath)
                             def updatedContent = content.replaceAll(/image: .+/, "image: ${APP_IMAGE}:${BUILD_TAG}")
@@ -133,19 +133,21 @@ pipeline {
         }
 
         stage('Push Updated Manifests to Git Repo') {
-            steps {
-                dir("${K8S_REPO_PATH}") {
-                    withCredentials([usernamePassword(credentialsId: "${GIT_CREDENTIALS_ID}", usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-                        sh '''
-                            git config user.name "Jenkins"
-                            git config user.email "jenkins@example.com"
-                            git add .
-                            git diff --quiet && git diff --staged --quiet || (git commit -m "Update deployment manifest with new image tag: ${BUILD_TAG}" && git push https://${GIT_USER}:${GIT_PASS}@github.com/mouad-oussalah/Appv2.git main)
-                        '''
-                    }
-                }
+    steps {
+        dir("${K8S_REPO_PATH}") {
+            withCredentials([string(credentialsId: 'github-pat', variable: 'GITHUB_TOKEN')]) {
+                sh """
+                    
+                    git config user.name "mouad-oussalah"
+                    git config user.email "mouadoussalah2016@gmail.com"
+                    git add .
+                    git commit -m "Update deployment manifest with new image tag: ${BUILD_TAG}"
+                    git push https://$GITHUB_TOKEN@github.com/mouad-oussalah/Appv2.git main
+                """
             }
         }
+    }
+}
     }
 
     post {

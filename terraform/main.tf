@@ -137,26 +137,6 @@ resource "google_compute_instance" "vm_app" {
   }
 }
 
-# resource "google_compute_resource_policy" "vm_app_schedule" {
-#   name   = "vm-app-schedule"
-#   region = "us-central1"
-  
-#   instance_schedule_policy {
-#     vm_start_schedule {
-#       schedule = "45 7 * * 1-5"
-#     }
-#     vm_stop_schedule {
-#       schedule = "45 14 * * 1-5"
-#     }
-#     time_zone = "Africa/Casablanca"
-#   }
-# }
-
-# resource "google_compute_instance_resource_policy_attachment" "vm_app_schedule_attachment" {
-#   instance = google_compute_instance.vm_app.name
-#   resource_policy = google_compute_resource_policy.vm_app_schedule.id
-#   zone = "us-central1-a"
-# }
 
 data "google_compute_instance" "vm_tooling" {
   name = google_compute_instance.vm_tooling.name

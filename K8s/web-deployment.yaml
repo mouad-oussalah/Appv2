@@ -13,44 +13,37 @@ spec:
         app: web
     spec:
       containers:
-        - name: web
-          image: mouadoussalah/olympicplayers-app:23
-          resources:
-            requests:
-              cpu: "250m"
-              memory: "256Mi"
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-          env:
-            - name: FLASK_APP
-              valueFrom:
-                configMapKeyRef:
-                  name: app-config
-                  key: FLASK_APP
-            - name: FLASK_ENV
-              valueFrom:
-                configMapKeyRef:
-                  name: app-config
-                  key: FLASK_ENV
-            - name: DATABASE_URL
-              value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(POSTGRES_DB)
-          envFrom:
-            - secretRef:
-                name: app-secrets
-            - configMapRef:
-                name: app-config
-          ports:
-            - containerPort: 5000
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 5000
-            initialDelaySeconds: 10
-            periodSeconds: 5
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 5000
-            initialDelaySeconds: 15
-            periodSeconds: 10
+      - name: web
+        image: mouadoussalah/olympicplayers-app:23
+        env:
+        - name: FLASK_APP
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: FLASK_APP
+        - name: FLASK_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: FLASK_ENV
+        - name: DATABASE_URL
+          value: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(POSTGRES_DB)
+        envFrom:
+        - secretRef:
+            name: app-secrets
+        - configMapRef:
+            name: app-config
+        ports:
+        - containerPort: 5000
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 10

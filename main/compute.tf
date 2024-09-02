@@ -6,6 +6,7 @@ resource "google_compute_instance" "vm_tooling" {
   boot_disk {
     initialize_params {
       image = "ubuntu-os-cloud/ubuntu-2204-lts"
+      size  = 50 
     }
   }
 
@@ -16,7 +17,7 @@ resource "google_compute_instance" "vm_tooling" {
   }
 
   metadata = {
-    ssh-keys = "${var.ssh_username}:${file(var.ssh_pub_key_path)}"
+    ssh-keys = "mouad:${file("~/.ssh/id_ed25519.pub")}"
   }
 
   tags = ["tooling"]
@@ -26,11 +27,12 @@ resource "google_compute_instance" "vm_app" {
   name         = "vm-app"
   machine_type = "e2-standard-4"
   zone         = var.zone
+  resource_policies = [google_compute_resource_policy.daily_schedule.id]
 
   boot_disk {
     initialize_params {
       image = "ubuntu-os-cloud/ubuntu-2204-lts"
-      size  = 50
+      size  = 50  
     }
   }
 
@@ -41,8 +43,16 @@ resource "google_compute_instance" "vm_app" {
   }
 
   metadata = {
-    ssh-keys = "${var.ssh_username}:${file(var.ssh_pub_key_path)}"
+    ssh-keys = "mouad:${file("~/.ssh/id_ed25519.pub")}"
+    startup-script = file("${path.module}/startup.sh")
+    shutdown-script = file("${path.module}/shutdown.sh")
   }
 
   tags = ["app"]
+
+  scheduling {
+    preemptible = false
+    automatic_restart = false
+    on_host_maintenance = "MIGRATE"
+  }
 }

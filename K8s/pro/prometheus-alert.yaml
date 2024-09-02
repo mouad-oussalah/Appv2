@@ -8,18 +8,16 @@ alertmanagerFiles:
     - name: 'gmail-notifications'
       email_configs:
       - to: mouadoussalah2016@gmail.com 
-        from: mouadoussalah2016@gmail.com # Update your from mail id here
+        from: mouadoussalah2016@gmail.com 
         smarthost: smtp.gmail.com:587
-        auth_username: mouadoussalah2016@gmail.com # Update your from mail id here
-        auth_identity: mouadoussalah2016@gmail.com # Update your from mail id here
-        auth_password: ffjvkiqcrkcxotfs # Update your app-password here
+        auth_username: mouadoussalah2016@gmail.com 
+        auth_identity: mouadoussalah2016@gmail.com 
+        auth_password: ffjvkiqcrkcxotfs 
         send_resolved: true
         headers:
           subject: " Prometheus -  Alert  "
         text: "{{ range .Alerts }} Hi, \n{{ .Annotations.summary }}  \n {{ .Annotations.description }} {{end}} "
-        # slack_configs:
-        #  - channel: '@you'
-        #    send_resolved: true
+        
 
     route:
       group_wait: 10s

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: mouadoussalah/olympicplayers-app:25
+        image: mouadoussalah/olympicplayers-app:26
         env:
         - name: FLASK_APP
           valueFrom:
